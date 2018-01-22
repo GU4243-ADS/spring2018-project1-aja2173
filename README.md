@@ -2,7 +2,7 @@
 # Project 1:
 
 ----
-
+edit readme
 
 ### [Project Description](doc/)
 This is the first and only *individual* (as opposed to *team*) this semester. 
