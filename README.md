@@ -73,12 +73,14 @@ The gender of pronouns can also differentiates the authors. We can first look at
 
 MWS uses far more female words than the other two(around 0.4 female vs 0.6 male). EAP is more male skewed, while HPL has a large bias towards using male characters.
 
-We can also look at the words in the sentences that mention men or women, to see which are associated with which. The wordclouds show the comparison
+We can also look at the words in the sentences that mention men or women, to see which are associated with which. The wordclouds show the comparison.
 
-Male Wordcloud:
+Male Wordcloud
+
 ![image](figs/male_wordcloud.png)
 
-Female Wordcloud:
+Female Wordcloud
+
 ![image](figs/female_wordcloud.png)
 
 Across all the authors, eyes, time and life are common to both, but male sentences feature the "night" while female sentences are more heavily associated with "love", "heart","beauty". Male sentences also seem to have structures in them, like "house" and "city"
@@ -125,10 +127,12 @@ MWS and EAP use more light than dark imagery, and with MWS the difference is the
 
 Looking at the wordclouds again, we see that light and dark actually have many shared associated words.
 
-Light Wordcloud:
+Light Wordcloud
+
 ![image](figs/light_wordcloud.png)
 
-Female Wordcloud:
+Dark Wordcloud
+
 ![image](figs/dark_wordcloud.png)
 
 Not suprisingly, the most dominant word in light sentences are "light", and for dark sentences "dark" and "black", since this was how we separated the sentences, but it's comforting to know the rest of the sentence is usually consistent. Often the words of the other kind are included with each other - "darkness" and "dark" in the light wordcloud and "day" or "light"in the dark wordcloud.
