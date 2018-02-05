@@ -81,13 +81,15 @@ all_words    <- rename(count(group_by(spooky_wrd, word)), all = n)
 author_words <- left_join(author_words, all_words, by = "word")
 author_words <- arrange(author_words, desc(all))
 author_words <- ungroup(head(author_words, 81))
-  
+
 ggplot(author_words) +
   geom_col(aes(reorder(word, all, FUN = min), n, fill = author)) +
   xlab(NULL) +
   coord_flip() +
   facet_wrap(~ author) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = 'Unigram Counts')
+ggsave('unigram_counts.png',path='../figs')
 ```
 
 ## Bigram Analysis
@@ -123,12 +125,14 @@ ggplot(author_bigrams) +
   facet_wrap(~ author) +
   theme(legend.position = "none") +
   labs(title = "Bigram Counts by Author")
+ggsave('bigram_counts.png',path='../figs')
 
 ggplot(bigrams_tf_idf_30) +
   geom_col(aes(bigram, tf_idf, fill = author)) +
   labs(x = NULL, y = "TF-IDF values") +
   theme(legend.position = "top", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
   labs(title = "Bigram TF-IDF")
+ggsave('bigram_tfidf.png',path='../figs')
 ```
 ## Trigram Analysis
 
@@ -157,12 +161,14 @@ ggplot(author_trigrams) +
   facet_wrap(~ author) +
   theme(legend.position = "none") +
   labs(title = "Trigram Frequencies")
+ggsave('trigram_counts.png',path='../figs')
 
 ggplot(trigrams_tf_idf_30) +
   geom_col(aes(trigram, tf_idf, fill = author)) +
   labs(x = NULL, y = "TF-IDF values") +
   theme(legend.position = "top", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
   labs(title = "Trigram TF-IDF")
+ggsave('trigram_tfidf.png',path='../figs')
 ```
 
 ## Genders
@@ -181,73 +187,16 @@ gender_wrd = unnest_tokens(spooky, word, text) %>%
 gender_frequency <- count(gender_wrd, sex, author)
 gender_tf_idf    <- bind_tf_idf(gender_frequency, sex, author, n)
 
-ggplot(gender_wrd,aes(sex, fill = author)) +
-  labs(x = "Genders") +
-  geom_bar(position = "dodge") +
-  labs(title = "Gender Counts")
-
 ggplot(gender_tf_idf) +
   geom_col(aes(sex, tf, fill = author),position = "dodge") +
   labs(x = NULL, y = "TF-IDF values") +
   theme(legend.position = "top", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
   labs(title = "Gender Frequency")
 
+ggsave('gender_frequency.png',path='../figs')
+
+
 ```
-
-## Singular vs Plural Pronouns
-
-Looking at singular vs plural pronouns, we see that all authors use the singular more than the plural, at almost the same rate in fact. MWS does tend to use the singular a bit more (80/20 split instead of 70/30 like EAP and HPL)
-
-```{r}
-pronoun_wrd = unnest_tokens(spooky, word, text) %>%
-        mutate(single = (word == 'he'| word == 'him'| word == 'his'|word =='she' |word == 'her'|word == 'hers' |word =='I'|word =='me'|word =='my'|word=='mine')) %>%
-        mutate(plural = (word == 'we'|word=='us'|word=='our'|word=='ours'|word=='they'|word=='them'|word=='their'|word=='theirs')) %>%
-        unite(pronoun, single, plural) %>%
-        mutate(pronoun = fct_recode(as.factor(pronoun), single = "TRUE_FALSE", plural = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
-        filter(pronoun != "na")
-
-pronoun_frequency <- count(pronoun_wrd, pronoun, author)
-pronoun_tf_idf    <- bind_tf_idf(pronoun_frequency, pronoun, author, n)
-
-ggplot(pronoun_wrd,aes(pronoun, fill = author)) +
-  labs(x = "Pronouns") +
-  geom_bar(position = "dodge") +
-  labs(title = "Pronoun Counts(Single/Plural)")
-
-ggplot(pronoun_tf_idf) +
-  geom_col(aes(pronoun, tf, fill = author),position = "dodge") +
-  labs(x = NULL, y = "TF values") +
-  theme(legend.position = "top", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
-  labs(title = "Pronoun Frequency(Single/Plural)")
-```
-
-## Light vs Dark
-
-MWS and EAP use more light than dark imagery, and with MWS the difference is the greatest. HPL on the other hand uses more dark imagery in his works.
-
-```{r}
-lights_wrd = unnest_tokens(spooky, word, text) %>%
-        mutate(light = (word == 'light'|word =='bright'|word=='luminous'|word=='rich'|word=='shiny'|word=='sunny'|word=='sun'|word=='burnished'|word=='flashing'|word=='glowing'|word=='shining'|word=='radiant'|word=='cloudless'|word=='polished'|word=='lustrous'|word=='white')) %>%
-        mutate(dark = (word == 'dark'|word=='black'|word=='grey'|word=='gray'|word=='dim'|word=='darkened'|word=='dingy'|word=='dull'|word=='foggy'|word=='gloomy'|word=='shady'|word=='shadow'|word=='somber')) %>%
-        unite(light, light, dark) %>%
-        mutate(light = fct_recode(as.factor(light), light = "TRUE_FALSE", dark = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
-        filter(light != "na")
-
-light_frequency <- count(light_wrds, light, author)
-light_tf_idf    <- bind_tf_idf(light_frequency, light, author, n)
-
-ggplot(lights_wrd,aes(light, fill = author)) +
-  labs(x = "Lightness") +
-  geom_bar(position = "dodge") +
-  labs(title = "Light vs Dark counts")
-
-ggplot(light_tf_idf) +
-  geom_col(aes(light, tf, fill = author),position = "dodge") +
-  labs(x = NULL, y = "TF values") +
-  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
-  labs(title = "Light vs Dark Frequency")
-```
-
 ## Gender Sentiment Analysis
 
 Here we isolate the sentences that mention male or females, then do sentiment analysis on the words in that sentence. First we exclude sentences that mention both male and female genders, as we are interested in the difference betweent the two. 
@@ -303,8 +252,34 @@ ggplot(male_tf_idf) +
   labs(x = NULL, y = "Difference in TF values") +
   theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
   labs(title = "Male - Female Sentiment Frequency Difference")
-```
 
+ggsave('gender_sentiments.png',path='../figs')
+
+```
+## Singular vs Plural Pronouns
+
+Looking at singular vs plural pronouns, we see that all authors use the singular more than the plural, at almost the same rate in fact. MWS does tend to use the singular a bit more (80/20 split instead of 70/30 like EAP and HPL)
+
+```{r}
+pronoun_wrd = unnest_tokens(spooky, word, text) %>%
+        mutate(single = (word == 'he'| word == 'him'| word == 'his'|word =='she' |word == 'her'|word == 'hers' |word =='I'|word =='me'|word =='my'|word=='mine')) %>%
+        mutate(plural = (word == 'we'|word=='us'|word=='our'|word=='ours'|word=='they'|word=='them'|word=='their'|word=='theirs')) %>%
+        unite(pronoun, single, plural) %>%
+        mutate(pronoun = fct_recode(as.factor(pronoun), single = "TRUE_FALSE", plural = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
+        filter(pronoun != "na")
+
+pronoun_frequency <- count(pronoun_wrd, pronoun, author)
+pronoun_tf_idf    <- bind_tf_idf(pronoun_frequency, pronoun, author, n)
+
+ggplot(pronoun_tf_idf) +
+  geom_col(aes(pronoun, tf, fill = author),position = "dodge") +
+  labs(x = NULL, y = "TF values") +
+  theme(legend.position = "top", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
+  labs(title = "Pronoun Frequency(Single/Plural)")
+
+ggsave('pronoun_frequency.png',path='../figs')
+
+```
 ## Single/Plural Pronoun Sentiment Analysis
 Like with gender, we take sentences that exclusively use single or plural pronouns and analyze the difference in frequency of various sentiments in those sentences.
 
@@ -349,6 +324,34 @@ ggplot(single_tf_idf) +
   labs(x = NULL, y = "Difference in TF values") +
   theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
   labs(title = "Single - Plural Sentiment Frequency Difference")
+
+ggsave('pronoun_sentiments.png',path='../figs')
+
+```
+
+## Light vs Dark
+
+MWS and EAP use more light than dark imagery, and with MWS the difference is the greatest. HPL on the other hand uses more dark imagery in his works.
+
+```{r}
+lights_wrd = unnest_tokens(spooky, word, text) %>%
+        mutate(light = (word == 'light'|word =='bright'|word=='luminous'|word=='rich'|word=='shiny'|word=='sunny'|word=='sun'|word=='burnished'|word=='flashing'|word=='glowing'|word=='shining'|word=='radiant'|word=='cloudless'|word=='polished'|word=='lustrous'|word=='white')) %>%
+        mutate(dark = (word == 'dark'|word=='black'|word=='grey'|word=='gray'|word=='dim'|word=='darkened'|word=='dingy'|word=='dull'|word=='foggy'|word=='gloomy'|word=='shady'|word=='shadow'|word=='somber')) %>%
+        unite(light, light, dark) %>%
+        mutate(light = fct_recode(as.factor(light), light = "TRUE_FALSE", dark = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
+        filter(light != "na")
+
+light_frequency <- count(lights_wrd, light, author)
+light_tf_idf    <- bind_tf_idf(light_frequency, light, author, n)
+
+ggplot(light_tf_idf) +
+  geom_col(aes(light, tf, fill = author),position = "dodge") +
+  labs(x = NULL, y = "TF values") +
+  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
+  labs(title = "Light vs Dark Frequency")
+
+ggsave('lights_frequency.png',path='../figs')
+
 ```
 
 ## Light/Dark Sentiments
@@ -397,6 +400,9 @@ ggplot(light_tf_idf) +
   labs(x = NULL, y = "Difference in TF values") +
   theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
   labs(title = "Light - Dark Sentiment Frequency Difference")
+
+ggsave('lights_sentiment.png',path='../figs')
+
 ```
 
 
