@@ -26,7 +26,7 @@ proj/
 
 Please see each subfolder for a README file.
 
-## Word analysis
+### Word analysis
 
 In this section we look at the words each author uses to distinguish some common phrases that may differentiate them.
 
@@ -36,7 +36,7 @@ In the first figure, we look at individual words by themselves, with no context.
 
 We see that  "time", "life", "night" and "eyes" are common to the 3 authors. MWS uses "love" a lot, and HPL uses "strange". 
 
-## Bigrams
+### Bigrams
 
 Now let's take a look at the bigram counts (sets of two words).
 
@@ -55,7 +55,7 @@ A few trends differentiate the authors:
   + On the other hand, EAP likes material things - "chess players", "main compartment", and "tea pot".
   + HPL describes locations a lot, like "shunned house", "ancient house", or "tempest mountain".
   
-## Trigrams
+### Trigrams
 
 We can do the same with trigrams. It seems that only EAP and HPL have trigrams that they like to repeat, at least in this dataset - MWS doesn't have any specific trigrams she reuses. Again we look at the top frequencies.
 
@@ -65,13 +65,23 @@ We can do the same with trigrams. It seems that only EAP and HPL have trigrams t
   - EAP still likes chess players, in fact they are usually "automaton chess players".
   - We see laughter again, still differentiated by spelling "ha ha ha" vs "heh heh heh". HPL's "heh" sounds more snide.
   
-##Men are from Mars, Women are from Venus
+## Men are from Mars, Women are from Venus
 
 The gender of pronouns can also differentiates the authors. We can first look at the frequencies of gendered pronouns themselves.
 
 ![image](figs/gender_frequency.png)
 
 MWS uses far more female words than the other two(around 0.4 female vs 0.6 male). EAP is more male skewed, while HPL has a large bias towards using male characters.
+
+We can also look at the words in the sentences that mention men or women, to see which are associated with which. The wordclouds show the comparison
+
+Male Wordcloud:
+![image](figs/male_wordcloud.png)
+
+Female Wordcloud:
+![image](figs/female_wordcloud.png)
+
+Across all the authors, eyes, time and life are common to both, but male sentences feature the "night" while female sentences are more heavily associated with "love", "heart","beauty". Male sentences also seem to have structures in them, like "house" and "city"
 
 Diving further into the treatment of the genders, we can look at the sentiments that surround each mention of a gendered pronoun.
 
@@ -112,6 +122,16 @@ Like with gender, we can take sentences that exclusively use single or plural pr
 MWS and EAP use more light than dark imagery, and with MWS the difference is the greatest. HPL on the other hand uses more dark imagery in his works.
 
 ![image](figs/lights_frequency.png)
+
+Looking at the wordclouds again, we see that light and dark actually have many shared associated words.
+
+Light Wordcloud:
+![image](figs/light_wordcloud.png)
+
+Female Wordcloud:
+![image](figs/dark_wordcloud.png)
+
+Not suprisingly, the most dominant word in light sentences are "light", and for dark sentences "dark" and "black", since this was how we separated the sentences, but it's comforting to know the rest of the sentence is usually consistent. Often the words of the other kind are included with each other - "darkness" and "dark" in the light wordcloud and "day" or "light"in the dark wordcloud.
 
 When comparing light/dark sentiments, we pretty much get exactly what we hope for in terms of sentiment association, but there doesn't seem to be much differentiation between the authors.
 

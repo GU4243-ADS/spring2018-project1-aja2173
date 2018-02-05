@@ -3,8 +3,8 @@ title: "Some Simple SPOOKY Data Analysis"
 author: "Alek Anichowski"
 date: "February 2, 2018"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ## Setup the libraries
@@ -82,6 +82,7 @@ author_words <- left_join(author_words, all_words, by = "word")
 author_words <- arrange(author_words, desc(all))
 author_words <- ungroup(head(author_words, 81))
 
+#Plot the counts of the unigrams
 ggplot(author_words) +
   geom_col(aes(reorder(word, all, FUN = min), n, fill = author)) +
   xlab(NULL) +
@@ -105,6 +106,8 @@ Although there aren't a lot of common bigrams, we can use them to differentiate 
 
 ```{r}
 # Bigram
+
+#Counts and Frequencies
 author_bigrams <- count(group_by(bigrams_united, bigram, author))
 all_bigrams    <- rename(count(group_by(bigrams_united, bigram)), all = n)
 author_bigrams <- left_join(author_bigrams, all_bigrams, by = "bigram")
@@ -117,7 +120,7 @@ bigrams_tf_idf    <- arrange(bigrams_tf_idf, desc(tf_idf))
 bigrams_tf_idf    <- mutate(bigrams_tf_idf, bigram = factor(bigram, levels = rev(unique(bigram))))
 bigrams_tf_idf_30 <- top_n(bigrams_tf_idf, 30, tf_idf)
 
-  
+#Plots  
 ggplot(author_bigrams) +
   geom_col(aes(reorder(bigram, all, FUN = min), n, fill = author)) +
   xlab(NULL) +
@@ -143,6 +146,8 @@ It seems that only EAP and HPL have trigrams that they like to repeat, at least 
   
 ```{r}
 # Trigram
+
+#Counts and Frequencies
 author_trigrams <- count(group_by(trigrams_united, trigram, author))
 all_trigrams    <- rename(count(group_by(trigrams_united, trigram)), all = n)
 author_trigrams <- left_join(author_trigrams, all_trigrams, by = "trigram")
@@ -153,7 +158,8 @@ trigrams_tf_idf    <- bind_tf_idf(trigrams_frequency, trigram, author, n)
 trigrams_tf_idf    <- arrange(trigrams_tf_idf, desc(tf_idf))
 trigrams_tf_idf    <- mutate(trigrams_tf_idf, trigram = factor(trigram, levels = rev(unique(trigram))))
 trigrams_tf_idf_30 <- top_n(trigrams_tf_idf, 20, tf_idf)
-  
+
+#Plots  
 ggplot(author_trigrams) +
   geom_col(aes(reorder(trigram, all, FUN = min), n, fill = author)) +
   xlab(NULL) +
@@ -176,7 +182,7 @@ ggsave('trigram_tfidf.png',path='../figs')
 The gender of pronouns also differentiates the authors. Looking at the counts of gendered pronouns, MWS uses far more female words than the other two-in fact, she uses far more pronouns in general, male and female. Looking at the frequency, this analysis holds up-MWS is balanced in her use of female to male characters (around 0.4 female vs 0.6 male). EAP is more male skewed, while HPL has a large bias towards using male characters.
 
 ```{r}
-
+#Finding words associated with a gendered pronoun
 gender_wrd = unnest_tokens(spooky, word, text) %>%
         mutate(male = (word == 'he'| word == 'him'| word == 'his'|word =='man' |word == 'gentleman'|word == 'boy'|word=='himself')) %>%
         mutate(female = (word == 'she' | word == 'her'| word == 'hers'|word =='woman'|word == 'lady'|word == 'girl'|word=='herself')) %>%
@@ -184,6 +190,7 @@ gender_wrd = unnest_tokens(spooky, word, text) %>%
         mutate(sex = fct_recode(as.factor(sex), male = "TRUE_FALSE", female = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
         filter(sex != "na")
 
+#Plotting the frequencies of each gender
 gender_frequency <- count(gender_wrd, sex, author)
 gender_tf_idf    <- bind_tf_idf(gender_frequency, sex, author, n)
 
@@ -194,7 +201,6 @@ ggplot(gender_tf_idf) +
   labs(title = "Gender Frequency")
 
 ggsave('gender_frequency.png',path='../figs')
-
 
 ```
 ## Gender Sentiment Analysis
@@ -209,12 +215,14 @@ More significant differences:
   -EAP trusts men more than women, this seems to be a major trait of his sentiments towards men.
   -EAP and MWS associate joy and sadness with women more than men, so they are more emotional in the corpus.
   -EAP's men are more positive, while the women more negative - the other author's don't have this difference between gendered pos and neg.
+  -MWS's treatment of the genders is fairly balanced
   
 Less significant differences:
   -Only in HPL are men more sad than women-in EAP and MWS sadness is associated with women more.
   -HPL's women are also more suprised, angry and disgusted than the men.
-  -MWS's treatment of the genders is fairly balanced
+
 ```{r}
+#Isolating the sentences that mention men or women
 male_wrd <- gender_wrd %>%
   group_by(id) %>%
   filter(sex =='male')
@@ -232,6 +240,7 @@ male_lines <- spooky %>%
 female_lines <- spooky %>%
   filter(id %in% female_only$id)
 
+#Tagging with sentiments
 get_sentiments('nrc')
 male_wrd <- unnest_tokens(male_lines, word, text)
 female_wrd <- unnest_tokens(female_lines, word, text)
@@ -239,6 +248,7 @@ female_wrd <- unnest_tokens(female_lines, word, text)
 male_sentiments <- inner_join(male_wrd, get_sentiments('nrc'), by = "word")
 female_sentiments <- inner_join(female_wrd, get_sentiments('nrc'), by = "word")
 
+#Getting sentiment Frequencies
 male_sentiment_frequency <- count(male_sentiments, sentiment, author)
 male_tf_idf    <- bind_tf_idf(male_sentiment_frequency, sentiment, author, n)
 
@@ -254,13 +264,41 @@ ggplot(male_tf_idf) +
   labs(title = "Male - Female Sentiment Frequency Difference")
 
 ggsave('gender_sentiments.png',path='../figs')
+```
+## Gender Wordcloud
+We can look at word clouds to see what specific words are associated with each gender. This is across all the authors. Eyes, time and life are common to both, but male sentences feature the "night" while female sentences are more heavily associated with "love", "heart","beauty". Male sentences also seem to have structures in them, like "house" and "city"
 
+```{r}
+#Finding male/female sentences again, but using stopwords removed so that the clouds are more interesting
+spooky_wrd <- unnest_tokens(spooky, word, text)
+spooky_wrd <- anti_join(spooky_wrd, stop_words, by = "word")
+
+male_lines <- spooky_wrd %>%
+  filter(id %in% male_groups$id)
+female_lines <- spooky_wrd %>%
+  filter(id %in% female_groups$id)
+
+png('../figs/male_wordcloud.png')
+male_words <- names(table(male_lines$word))
+male_freqs <- table(male_lines$word)
+wordcloud(male_words, male_freqs, max.words = 50, color = c("purple4", "red4", "black"))
+dev.off()
+
+png('../figs/female_wordcloud.png')
+female_words <- names(table(female_lines$word))
+female_freqs <- table(female_lines$word)
+wordcloud(female_words, female_freqs, max.words = 50, color = c("purple4", "red4", "black"))
+dev.off()
+
+wordcloud(male_words, male_freqs, max.words = 50, color = c("purple4", "red4", "black"))
+wordcloud(female_words, female_freqs, max.words = 50, color = c("purple4", "red4", "black"))
 ```
 ## Singular vs Plural Pronouns
 
 Looking at singular vs plural pronouns, we see that all authors use the singular more than the plural, at almost the same rate in fact. MWS does tend to use the singular a bit more (80/20 split instead of 70/30 like EAP and HPL)
 
 ```{r}
+#Finding single/plural pronouns
 pronoun_wrd = unnest_tokens(spooky, word, text) %>%
         mutate(single = (word == 'he'| word == 'him'| word == 'his'|word =='she' |word == 'her'|word == 'hers' |word =='I'|word =='me'|word =='my'|word=='mine')) %>%
         mutate(plural = (word == 'we'|word=='us'|word=='our'|word=='ours'|word=='they'|word=='them'|word=='their'|word=='theirs')) %>%
@@ -287,6 +325,7 @@ Like with gender, we take sentences that exclusively use single or plural pronou
   -EAP trusts groups more, wheras HPL and MWS trust the individual.
   -HPL and MWS associate fear with the plural more than the single pronoun.
 ```{r}
+#Single/Plural Sentiment Analysis
 single_wrd <- pronoun_wrd %>%
   group_by(id) %>%
   filter(pronoun =='single')
@@ -334,6 +373,7 @@ ggsave('pronoun_sentiments.png',path='../figs')
 MWS and EAP use more light than dark imagery, and with MWS the difference is the greatest. HPL on the other hand uses more dark imagery in his works.
 
 ```{r}
+#Finding light/dark words
 lights_wrd = unnest_tokens(spooky, word, text) %>%
         mutate(light = (word == 'light'|word =='bright'|word=='luminous'|word=='rich'|word=='shiny'|word=='sunny'|word=='sun'|word=='burnished'|word=='flashing'|word=='glowing'|word=='shining'|word=='radiant'|word=='cloudless'|word=='polished'|word=='lustrous'|word=='white')) %>%
         mutate(dark = (word == 'dark'|word=='black'|word=='grey'|word=='gray'|word=='dim'|word=='darkened'|word=='dingy'|word=='dull'|word=='foggy'|word=='gloomy'|word=='shady'|word=='shadow'|word=='somber')) %>%
@@ -363,6 +403,7 @@ When comparing light/dark sentiments, we pretty much get exactly what we hope fo
   -EAP has more disgust in his dark imagery
   -
 ```{r}
+#Light and Dark Sentiments
 light_wrd <- lights_wrd %>%
   group_by(id) %>%
   filter(light =='light')
@@ -403,6 +444,36 @@ ggplot(light_tf_idf) +
 
 ggsave('lights_sentiment.png',path='../figs')
 
+```
+## Light/Dark Wordcloud
+Here we look at the wordclouds again. Not suprisingly, the most dominant word in light sentences are "light", and for dark sentences "dark" and "black", since this was how we separated the sentences, but it's comforting to know the rest of the sentence is usually consistent. This is again the accumulation of all the author's sentences.
+
+Often the words of the other kind are included with each other - "darkness" and "dark" in the light wordcloud and "day" or "light"in the dark wordcloud.
+
+```{r}
+#Light and dark wordcloud, with stopwords removed
+spooky_wrd <- unnest_tokens(spooky, word, text)
+spooky_wrd <- anti_join(spooky_wrd, stop_words, by = "word")
+
+light_lines <- spooky_wrd %>%
+  filter(id %in% light_groups$id)
+dark_lines <- spooky_wrd %>%
+  filter(id %in% dark_groups$id)
+
+png('../figs/light_wordcloud.png')
+light_words <- names(table(light_lines$word))
+light_freqs <- table(light_lines$word)
+wordcloud(light_words, light_freqs, max.words = 50, color = c("purple4", "red4", "black"))
+dev.off()
+
+png('../figs/dark_wordcloud.png')
+dark_words <- names(table(dark_lines$word))
+dark_freqs <- table(dark_lines$word)
+wordcloud(dark_words, dark_freqs, max.words = 50, color = c("purple4", "red4", "black"))
+dev.off()
+
+wordcloud(light_words, light_freqs, max.words = 50, color = c("purple4", "red4", "black"))
+wordcloud(dark_words, dark_freqs, max.words = 50, color = c("purple4", "red4", "black"))
 ```
 
 
