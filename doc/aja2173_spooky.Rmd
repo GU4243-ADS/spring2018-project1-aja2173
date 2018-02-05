@@ -216,7 +216,93 @@ ggplot(pronoun_wrd,aes(pronoun, fill = author)) +
 
 ggplot(pronoun_tf_idf) +
   geom_col(aes(pronoun, tf, fill = author),position = "dodge") +
-  labs(x = NULL, y = "TF-IDF values") +
+  labs(x = NULL, y = "TF values") +
   theme(legend.position = "top", axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
   labs(title = "Pronoun Frequency(Single/Plural)")
+```
+
+## Light vs Dark
+
+MWS and EAP use more light than dark imagery, and with MWS the difference is the greatest. HPL on the other hand uses more dark imagery in his works.
+
+```{r}
+light_wrd = unnest_tokens(spooky, word, text) %>%
+        mutate(light = (word == 'light'|word =='bright'|word=='luminous'|word=='rich'|word=='shiny'|word=='sunny'|word=='sun'|word=='burnished'|word=='flashing'|word=='glowing'|word=='shining'|word=='radiant'|word=='cloudless'|word=='polished'|word=='lustrous'|word=='white')) %>%
+        mutate(dark = (word == 'dark'|word=='black'|word=='grey'|word=='gray'|word=='dim'|word=='darkened'|word=='dingy'|word=='dull'|word=='foggy'|word=='gloomy'|word=='shady'|word=='shadow'|word=='somber')) %>%
+        unite(light, light, dark) %>%
+        mutate(light = fct_recode(as.factor(light), light = "TRUE_FALSE", dark = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
+        filter(light != "na")
+
+light_frequency <- count(light_wrd, light, author)
+light_tf_idf    <- bind_tf_idf(light_frequency, light, author, n)
+
+ggplot(light_wrd,aes(light, fill = author)) +
+  labs(x = "Lightness") +
+  geom_bar(position = "dodge") +
+  labs(title = "Light vs Dark counts")
+
+ggplot(light_tf_idf) +
+  geom_col(aes(light, tf, fill = author),position = "dodge") +
+  labs(x = NULL, y = "TF values") +
+  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
+  labs(title = "Light vs Dark Frequency")
+```
+
+## Sentence Analysis
+```{r}
+male_wrd <- gender_wrd %>%
+  group_by(id) %>%
+  filter(sex =='male')
+male_groups <- unique(male_wrd[,1])
+
+female_wrd <- gender_wrd %>%
+  group_by(id) %>%
+  filter(sex =='female')
+female_groups <- unique(female_wrd[,1])
+
+male_only <- anti_join(male_groups,female_groups)
+female_only <- anti_join(female_groups,male_groups)
+male_lines <- spooky %>%
+  filter(id %in% male_only$id)
+female_lines <- spooky %>%
+  filter(id %in% female_only$id)
+
+get_sentiments('nrc')
+male_wrd <- unnest_tokens(male_lines, word, text)
+female_wrd <- unnest_tokens(female_lines, word, text)
+
+male_sentiments <- inner_join(male_wrd, get_sentiments('nrc'), by = "word")
+female_sentiments <- inner_join(female_wrd, get_sentiments('nrc'), by = "word")
+
+male_sentiment_frequency <- count(male_sentiments, sentiment, author)
+male_tf_idf    <- bind_tf_idf(male_sentiment_frequency, sentiment, author, n)
+
+female_sentiment_frequency <- count(female_sentiments, sentiment, author)
+female_tf_idf    <- bind_tf_idf(female_sentiment_frequency, sentiment, author, n)
+
+ggplot(count(male_sentiments, author, sentiment)) + 
+  geom_col(aes(sentiment, n, fill = sentiment)) + 
+  facet_wrap(~ author) +
+  coord_flip() +
+  theme(legend.position = "none")
+  labs(title = 'Male Sentiment Counts')
+
+ggplot(count(female_sentiments, author, sentiment)) + 
+  geom_col(aes(sentiment, n, fill = sentiment)) + 
+  facet_wrap(~ author) +
+  coord_flip() +
+  theme(legend.position = "none")
+  labs(title = 'Female Sentiment Counts')
+  
+ggplot(male_tf_idf) +
+  geom_col(aes(sentiment, tf, fill = author),position = "dodge") +
+  labs(x = NULL, y = "TF values") +
+  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
+  labs(title = "Male Sentiment Frequency")
+
+ggplot(female_tf_idf) +
+  geom_col(aes(sentiment, tf, fill = author),position = "dodge") +
+  labs(x = NULL, y = "TF values") +
+  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
+  labs(title = "Female Sentiment Frequency")
 ```
