@@ -65,6 +65,62 @@ We can do the same with trigrams. It seems that only EAP and HPL have trigrams t
   - EAP still likes chess players, in fact they are usually "automaton chess players".
   - We see laughter again, still differentiated by spelling "ha ha ha" vs "heh heh heh". HPL's "heh" sounds more snide.
   
+##Men are from Mars, Women are from Venus
+
+The gender of pronouns can also differentiates the authors. We can first look at the frequencies of gendered pronouns themselves.
+
+![image](figs/gender_frequency.png)
+
+MWS uses far more female words than the other two(around 0.4 female vs 0.6 male). EAP is more male skewed, while HPL has a large bias towards using male characters.
+
+Diving further into the treatment of the genders, we can look at the sentiments that surround each mention of a gendered pronoun.
+
+Here we isolate the sentences that mention male or females, then do sentiment analysis on the words in that sentence. Interestingly, since there are less female sentences overall(1837 female vs 5176 male), the 525 shared sentences(with both men and women in them) constitute a larger percentage of the female sentences. 28% of the female sentences also had men in them, while only 10% of the male sentences had women, meaning the females are mentioned along with men with higher frequency than men were mentioned with women. 
+
+The graph shows the frequency of sentiments across the authors, specifically the difference between the male frequency and female frequency of a certain sentiment. A positive difference means that the male sentences were more associated with this sentiment, and negative female sentences. A few trends emerge:
+
+![image](figs/gender_sentiments.png)
+
+More significant differences:
+  +EAP trusts men more than women, this seems to be a major trait of his sentiments towards men.
+  +EAP and MWS associate joy and sadness with women more than men, so they are more emotional in the corpus.
+  +EAP's men are more positive, while the women more negative - the other author's don't have this difference between gendered pos and neg.
+  +MWS's treatment of the genders is fairly balanced
+  
+Less significant differences:
+  +Only in HPL are men more sad than women-in EAP and MWS sadness is associated with women more.
+  +HPL's women are also more suprised, angry and disgusted than the men.
+
+## Introverts vs Extroverts
+
+Next we look at the treatment of singular and plural pronouns, in another frequency graph.
+
+![image](figs/pronoun_frequency.png)
+
+Looking at singular vs plural pronouns, we see that all authors use the singular more than the plural, at almost the same rate in fact. MWS does tend to use the singular a bit more (80/20 split instead of 70/30 like EAP and HPL)
+
+Like with gender, we can take sentences that exclusively use single or plural pronouns and analyze the difference in frequency of various sentiments in those sentences.
+
+![image](figs/pronoun_sentiments.png)
+
+  -In EAP the plural sentences are more positive than the single, but for HPL it's reversed, single is more positive than plural.
+  -EAP trusts groups more, wheras HPL and MWS trust the individual.
+  -HPL and MWS associate fear with the plural more than the single pronoun.
+  
+## No shadows without light
+
+MWS and EAP use more light than dark imagery, and with MWS the difference is the greatest. HPL on the other hand uses more dark imagery in his works.
+
+![image](figs/lights_frequency.png)
+
+When comparing light/dark sentiments, we pretty much get exactly what we hope for in terms of sentiment association, but there doesn't seem to be much differentiation between the authors.
+
+![image](figs/lights_sentiment.png)
+
+  -anticipation, joy and positivity are associated with light.
+  -negative and sadness are associated with dark.
+  -EAP and MWS pair suprise with light, while HPL is unbiased
+  -EAP has more disgust in his dark imagery
 
 
 
