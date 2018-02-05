@@ -172,8 +172,8 @@ The gender of pronouns also differentiates the authors. Looking at the counts of
 ```{r}
 
 gender_wrd = unnest_tokens(spooky, word, text) %>%
-        mutate(male = (word == 'he'| word == 'him'| word == 'his'|word =='man' |word == 'gentleman'|word == 'boy')) %>%
-        mutate(female = (word == 'she' | word == 'her'| word == 'hers'|word =='woman'|word == 'lady'|word == 'girl')) %>%
+        mutate(male = (word == 'he'| word == 'him'| word == 'his'|word =='man' |word == 'gentleman'|word == 'boy'|word=='himself')) %>%
+        mutate(female = (word == 'she' | word == 'her'| word == 'hers'|word =='woman'|word == 'lady'|word == 'girl'|word=='herself')) %>%
         unite(sex, male, female) %>%
         mutate(sex = fct_recode(as.factor(sex), male = "TRUE_FALSE", female = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
         filter(sex != "na")
@@ -226,17 +226,17 @@ ggplot(pronoun_tf_idf) +
 MWS and EAP use more light than dark imagery, and with MWS the difference is the greatest. HPL on the other hand uses more dark imagery in his works.
 
 ```{r}
-light_wrd = unnest_tokens(spooky, word, text) %>%
+lights_wrd = unnest_tokens(spooky, word, text) %>%
         mutate(light = (word == 'light'|word =='bright'|word=='luminous'|word=='rich'|word=='shiny'|word=='sunny'|word=='sun'|word=='burnished'|word=='flashing'|word=='glowing'|word=='shining'|word=='radiant'|word=='cloudless'|word=='polished'|word=='lustrous'|word=='white')) %>%
         mutate(dark = (word == 'dark'|word=='black'|word=='grey'|word=='gray'|word=='dim'|word=='darkened'|word=='dingy'|word=='dull'|word=='foggy'|word=='gloomy'|word=='shady'|word=='shadow'|word=='somber')) %>%
         unite(light, light, dark) %>%
         mutate(light = fct_recode(as.factor(light), light = "TRUE_FALSE", dark = "FALSE_TRUE", na = "FALSE_FALSE")) %>% 
         filter(light != "na")
 
-light_frequency <- count(light_wrd, light, author)
+light_frequency <- count(light_wrds, light, author)
 light_tf_idf    <- bind_tf_idf(light_frequency, light, author, n)
 
-ggplot(light_wrd,aes(light, fill = author)) +
+ggplot(lights_wrd,aes(light, fill = author)) +
   labs(x = "Lightness") +
   geom_bar(position = "dodge") +
   labs(title = "Light vs Dark counts")
@@ -248,7 +248,23 @@ ggplot(light_tf_idf) +
   labs(title = "Light vs Dark Frequency")
 ```
 
-## Sentence Analysis
+## Gender Sentiment Analysis
+
+Here we isolate the sentences that mention male or females, then do sentiment analysis on the words in that sentence. First we exclude sentences that mention both male and female genders, as we are interested in the difference betweent the two. 
+
+Interestingly, since there are less female sentences overall(1837 female vs 5176 male), the 525 shared sentences(with both men and women in them) constitute a larger percentage of the female sentences. 28% of the female sentences also had men in them, while only 10% of the male sentences had women, meaning the females are mentioned along with men with higher frequency than men were mentioned with women. 
+
+Going on to the sentiment analysis, the counts are not that useful, since there are so many more male sentences, so the counts are also biased. The graph shows the frequency of sentiments across the authors, specifically the difference between the male frequency and female frequency of a certain sentiment. A positive difference means that the male sentences were more associated with this sentiment, and negative female sentences. A few trends emerge:
+
+More significant differences:
+  -EAP trusts men more than women, this seems to be a major trait of his sentiments towards men.
+  -EAP and MWS associate joy and sadness with women more than men, so they are more emotional in the corpus.
+  -EAP's men are more positive, while the women more negative - the other author's don't have this difference between gendered pos and neg.
+  
+Less significant differences:
+  -Only in HPL are men more sad than women-in EAP and MWS sadness is associated with women more.
+  -HPL's women are also more suprised, angry and disgusted than the men.
+  -MWS's treatment of the genders is fairly balanced
 ```{r}
 male_wrd <- gender_wrd %>%
   group_by(id) %>%
@@ -280,29 +296,107 @@ male_tf_idf    <- bind_tf_idf(male_sentiment_frequency, sentiment, author, n)
 female_sentiment_frequency <- count(female_sentiments, sentiment, author)
 female_tf_idf    <- bind_tf_idf(female_sentiment_frequency, sentiment, author, n)
 
-ggplot(count(male_sentiments, author, sentiment)) + 
-  geom_col(aes(sentiment, n, fill = sentiment)) + 
-  facet_wrap(~ author) +
-  coord_flip() +
-  theme(legend.position = "none")
-  labs(title = 'Male Sentiment Counts')
+male_tf_idf$diff <- male_tf_idf$tf-female_tf_idf$tf
 
-ggplot(count(female_sentiments, author, sentiment)) + 
-  geom_col(aes(sentiment, n, fill = sentiment)) + 
-  facet_wrap(~ author) +
-  coord_flip() +
-  theme(legend.position = "none")
-  labs(title = 'Female Sentiment Counts')
-  
 ggplot(male_tf_idf) +
-  geom_col(aes(sentiment, tf, fill = author),position = "dodge") +
-  labs(x = NULL, y = "TF values") +
+  geom_col(aes(sentiment, diff, fill = author),position = "dodge") +
+  labs(x = NULL, y = "Difference in TF values") +
   theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
-  labs(title = "Male Sentiment Frequency")
-
-ggplot(female_tf_idf) +
-  geom_col(aes(sentiment, tf, fill = author),position = "dodge") +
-  labs(x = NULL, y = "TF values") +
-  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
-  labs(title = "Female Sentiment Frequency")
+  labs(title = "Male - Female Sentiment Frequency Difference")
 ```
+
+## Single/Plural Pronoun Sentiment Analysis
+Like with gender, we take sentences that exclusively use single or plural pronouns and analyze the difference in frequency of various sentiments in those sentences.
+
+  -In EAP the plural sentences are more positive than the single, but for HPL it's reversed, single is more positive than plural.
+  -EAP trusts groups more, wheras HPL and MWS trust the individual.
+  -HPL and MWS associate fear with the plural more than the single pronoun.
+```{r}
+single_wrd <- pronoun_wrd %>%
+  group_by(id) %>%
+  filter(pronoun =='single')
+single_groups <- unique(single_wrd[,1])
+
+plural_wrd <- pronoun_wrd %>%
+  group_by(id) %>%
+  filter(pronoun =='plural')
+plural_groups <- unique(plural_wrd[,1])
+
+single_only <- anti_join(single_groups,plural_groups)
+plural_only <- anti_join(plural_groups,single_groups)
+single_lines <- spooky %>%
+  filter(id %in% single_only$id)
+plural_lines <- spooky %>%
+  filter(id %in% plural_only$id)
+
+get_sentiments('nrc')
+single_wrd <- unnest_tokens(single_lines, word, text)
+plural_wrd <- unnest_tokens(plural_lines, word, text)
+
+single_sentiments <- inner_join(single_wrd, get_sentiments('nrc'), by = "word")
+plural_sentiments <- inner_join(plural_wrd, get_sentiments('nrc'), by = "word")
+
+single_sentiment_frequency <- count(single_sentiments, sentiment, author)
+single_tf_idf    <- bind_tf_idf(single_sentiment_frequency, sentiment, author, n)
+
+plural_sentiment_frequency <- count(plural_sentiments, sentiment, author)
+plural_tf_idf    <- bind_tf_idf(plural_sentiment_frequency, sentiment, author, n)
+
+single_tf_idf$diff <- single_tf_idf$tf-plural_tf_idf$tf
+
+ggplot(single_tf_idf) +
+  geom_col(aes(sentiment, diff, fill = author),position = "dodge") +
+  labs(x = NULL, y = "Difference in TF values") +
+  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
+  labs(title = "Single - Plural Sentiment Frequency Difference")
+```
+
+## Light/Dark Sentiments
+
+When comparing light/dark sentiments, we pretty much get exactly what we hope for in terms of sentiment association, but there doesn't seem to be much differentiation between the authors.
+  -anticipation, joy and positivity are associated with light.
+  -negative and sadness are associated with dark.
+  -EAP and MWS pair suprise with light, while HPL is unbiased
+  -EAP has more disgust in his dark imagery
+  -
+```{r}
+light_wrd <- lights_wrd %>%
+  group_by(id) %>%
+  filter(light =='light')
+light_groups <- unique(light_wrd[,1])
+
+dark_wrd <- lights_wrd %>%
+  group_by(id) %>%
+  filter(light =='dark')
+dark_groups <- unique(dark_wrd[,1])
+
+light_only <- anti_join(light_groups,dark_groups)
+dark_only <- anti_join(dark_groups,light_groups)
+light_lines <- spooky %>%
+  filter(id %in% light_only$id)
+dark_lines <- spooky %>%
+  filter(id %in% dark_only$id)
+
+get_sentiments('nrc')
+light_wrd <- unnest_tokens(light_lines, word, text)
+dark_wrd <- unnest_tokens(dark_lines, word, text)
+
+light_sentiments <- inner_join(light_wrd, get_sentiments('nrc'), by = "word")
+dark_sentiments <- inner_join(dark_wrd, get_sentiments('nrc'), by = "word")
+
+light_sentiment_frequency <- count(light_sentiments, sentiment, author)
+light_tf_idf    <- bind_tf_idf(light_sentiment_frequency, sentiment, author, n)
+
+dark_sentiment_frequency <- count(dark_sentiments, sentiment, author)
+dark_tf_idf    <- bind_tf_idf(dark_sentiment_frequency, sentiment, author, n)
+
+light_tf_idf$diff <- light_tf_idf$tf-dark_tf_idf$tf
+
+ggplot(light_tf_idf) +
+  geom_col(aes(sentiment, diff, fill = author),position = "dodge") +
+  labs(x = NULL, y = "Difference in TF values") +
+  theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9)) +
+  labs(title = "Light - Dark Sentiment Frequency Difference")
+```
+
+
